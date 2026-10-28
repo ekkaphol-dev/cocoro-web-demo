@@ -47,6 +47,22 @@ const menus: { label: string; icon: ReactNode; badge?: boolean }[] = [
   { label: "We Hear Your Voice", icon: <VoiceIcon /> },
 ];
 
+// image: ใส่ path รูป (ว่างไว้ = แสดงพื้นที่ว่าง)
+const announcements = [
+  {
+    id: "1",
+    title: "แจ้งปิดให้บริการพื้นที่จุดรับ-ส่ง (Drop-off) บริเวณหน้าทางเข้าล็อบบี้ชั่วคราว",
+    date: "28/10/2026",
+    image: "",
+  },
+  {
+    id: "2",
+    title: "แจ้งปิดให้บริการพื้นที่จุดรับ-ส่ง (Drop-off) บริเวณหน้าทางเข้าล็อบบี้ชั่วคราว",
+    date: "24/10/2026",
+    image: "",
+  },
+];
+
 const tabs = [
   { label: "หน้าแรก", icon: <HomeIcon /> },
   { label: "ประกาศ", icon: <NewsIcon /> },
@@ -65,7 +81,9 @@ export default function HomeScreen() {
   const onScroll = () => {
     const el = sliderRef.current;
     if (!el) return;
-    setActiveSlide(Math.round(el.scrollLeft / el.clientWidth));
+    const index = Math.round(el.scrollLeft / el.clientWidth);
+    setActiveSlide(index);
+    if (units[index]) setSelectedUnit(units[index].id);
   };
 
   const goTo = (index: number) => {
@@ -89,18 +107,37 @@ export default function HomeScreen() {
   };
 
   return (
-    <div className="relative mx-auto flex min-h-dvh w-full max-w-[480px] flex-col bg-white shadow-xl">
+    <div className="flex min-h-dvh w-full flex-col bg-white">
       {/* Header */}
-      <header className="bg-brand px-5 pb-16 pt-10 text-white">
-        <div className="flex items-center gap-3">
+      <header className="bg-brand text-white">
+        <div className="mx-auto flex w-full max-w-6xl items-center gap-3 px-5 pb-16 pt-10 sm:px-6 md:gap-6 md:px-8 md:pb-20 md:pt-6">
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/80">
             <UserIcon />
           </div>
-          <div className="flex-1 leading-tight">
+          <div className="min-w-0 flex-1 leading-tight">
             <p className="text-lg">สวัสดี</p>
-            <p className="text-xl text-pink-200">Welcome Goodsday</p>
+            <p className="truncate text-xl text-pink-200">Welcome Goodsday</p>
           </div>
-          <button aria-label="สิทธิพิเศษ" className="p-1">
+
+          {/* Desktop navigation */}
+          <nav className="hidden items-center gap-1 md:flex">
+            {tabs.map((t, i) => (
+              <button
+                key={t.label}
+                aria-label={t.label}
+                title={t.label}
+                onClick={() => setActiveTab(i)}
+                className={`flex items-center gap-2 rounded-full px-3 py-2 text-base transition-colors lg:px-4 [&_svg]:h-5 [&_svg]:w-5 ${
+                  i === activeTab ? "bg-white/15 font-medium" : "text-white/75 hover:bg-white/10"
+                }`}
+              >
+                {t.icon}
+                <span className="hidden lg:inline">{t.label}</span>
+              </button>
+            ))}
+          </nav>
+
+          <button aria-label="สิทธิพิเศษ" className="p-1 md:hidden">
             <GiftIcon className="h-8 w-8" />
           </button>
           <button aria-label="ปฏิทิน" className="p-1">
@@ -109,109 +146,151 @@ export default function HomeScreen() {
         </div>
       </header>
 
-      <main className="-mt-8 flex-1 rounded-t-[28px] bg-white px-4 pb-28 pt-6">
-        {/* Unit selector */}
-        <div className="relative">
-          <select
-            value={selectedUnit}
-            onChange={(e) => onSelectUnit(e.target.value)}
-            className="h-14 w-full appearance-none rounded-xl border border-gray-200 bg-white px-4 text-lg text-gray-500 outline-none focus:border-brand"
-          >
-            <option value="" disabled>
-              ห้องทั้งหมดที่คุณมี
-            </option>
-            {units.map((u) => (
-              <option key={u.id} value={u.id}>
-                {u.number} · {u.project}
-              </option>
-            ))}
-          </select>
-          <ChevronDownIcon className="pointer-events-none absolute right-4 top-1/2 h-5 w-5 -translate-y-1/2 text-brand-dark" />
-        </div>
-
-        {/* Unit carousel */}
-        <div
-          ref={sliderRef}
-          onScroll={onScroll}
-          className="no-scrollbar mt-5 flex snap-x snap-mandatory overflow-x-auto"
-        >
-          {units.map((u, i) => (
-            <div key={u.id} className="w-full shrink-0 snap-center">
-              <div className="relative aspect-[16/9] overflow-hidden rounded-xl bg-gradient-to-br from-slate-300 to-slate-500">
-                {u.image && (
-                  <Image
-                    src={u.image}
-                    alt={`${u.project} ${u.number}`}
-                    fill
-                    sizes="(max-width: 480px) 100vw, 480px"
-                    className="object-cover"
-                    priority={i === 0}
-                  />
-                )}
-                <div className="absolute inset-0 bg-gradient-to-t from-[#0b1440]/90 via-[#0b1440]/20 to-transparent" />
-                <span className="absolute left-3 top-3 rounded-md bg-accent px-3 py-1 text-base text-white">
-                  {u.tag}
-                </span>
-                <button
-                  aria-label="รายการโปรด"
-                  onClick={() => toggleFavorite(u.id)}
-                  className="absolute right-3 top-3"
+      <main className="-mt-8 flex-1 rounded-t-[28px] bg-white md:-mt-10 md:rounded-t-[36px]">
+        <div className="mx-auto w-full max-w-6xl px-4 pb-28 pt-6 sm:px-6 md:px-8 md:pb-16 md:pt-8">
+          <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_400px] lg:items-start lg:gap-8">
+            <div>
+              {/* Unit selector */}
+              <div className="relative">
+                <select
+                  value={selectedUnit}
+                  onChange={(e) => onSelectUnit(e.target.value)}
+                  className="h-14 w-full appearance-none rounded-xl border border-gray-200 bg-white px-4 pr-12 text-lg text-gray-500 outline-none focus:border-brand"
                 >
-                  <HeartIcon filled={favorites.has(u.id)} />
-                </button>
-                <div className="absolute bottom-3 left-4 text-white">
-                  <p className="text-4xl font-semibold leading-none">{u.number}</p>
-                  <p className="mt-2 text-xl font-medium tracking-wide">{u.project}</p>
-                  <p className="flex items-center gap-1 text-sm">
-                    <ShieldIcon />
-                    วันหมดประกัน : {u.warrantyEnd}
-                  </p>
-                </div>
+                  <option value="" disabled>
+                    ห้องทั้งหมดที่คุณมี
+                  </option>
+                  {units.map((u) => (
+                    <option key={u.id} value={u.id}>
+                      {u.number} · {u.project}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDownIcon className="pointer-events-none absolute right-4 top-1/2 h-5 w-5 -translate-y-1/2 text-brand-dark" />
+              </div>
+
+              {/* Unit carousel */}
+              <div
+                ref={sliderRef}
+                onScroll={onScroll}
+                className="no-scrollbar mt-5 flex snap-x snap-mandatory overflow-x-auto rounded-xl"
+              >
+                {units.map((u, i) => (
+                  <div key={u.id} className="w-full shrink-0 snap-center">
+                    <div className="relative aspect-video overflow-hidden rounded-xl bg-linear-to-br from-slate-300 to-slate-500">
+                      {u.image && (
+                        <Image
+                          src={u.image}
+                          alt={`${u.project} ${u.number}`}
+                          fill
+                          sizes="(min-width: 1024px) 700px, 100vw"
+                          className="object-cover"
+                          priority={i === 0}
+                        />
+                      )}
+                      <div className="absolute inset-0 bg-linear-to-t from-[#0b1440]/90 via-[#0b1440]/20 to-transparent" />
+                      <span className="absolute left-3 top-3 rounded-md bg-accent px-3 py-1 text-sm text-white sm:text-base">
+                        {u.tag}
+                      </span>
+                      <button
+                        aria-label="รายการโปรด"
+                        onClick={() => toggleFavorite(u.id)}
+                        className="absolute right-3 top-3"
+                      >
+                        <HeartIcon filled={favorites.has(u.id)} />
+                      </button>
+                      <div className="absolute bottom-3 left-4 right-4 text-white sm:bottom-5 sm:left-5">
+                        <p className="text-3xl font-semibold leading-none sm:text-4xl md:text-5xl">
+                          {u.number}
+                        </p>
+                        <p className="mt-1 truncate text-lg font-medium tracking-wide sm:mt-2 sm:text-xl md:text-2xl">
+                          {u.project}
+                        </p>
+                        <p className="flex items-center gap-1 text-xs sm:text-sm md:text-base">
+                          <ShieldIcon />
+                          วันหมดประกัน : {u.warrantyEnd}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Dots */}
+              <div className="mt-2 flex items-center gap-1">
+                {units.map((u, i) => (
+                  <button
+                    key={u.id}
+                    aria-label={`สไลด์ ${i + 1}`}
+                    onClick={() => goTo(i)}
+                    className={`h-2 rounded-full transition-all ${
+                      i === activeSlide ? "w-6 bg-brand" : "w-2 bg-gray-200"
+                    }`}
+                  />
+                ))}
               </div>
             </div>
-          ))}
-        </div>
 
-        {/* Dots */}
-        <div className="mt-2 flex items-center gap-1">
-          {units.map((u, i) => (
-            <button
-              key={u.id}
-              aria-label={`สไลด์ ${i + 1}`}
-              onClick={() => goTo(i)}
-              className={`h-2 rounded-full transition-all ${
-                i === activeSlide ? "w-6 bg-brand" : "w-2 bg-gray-200"
-              }`}
-            />
-          ))}
-        </div>
+            {/* Menu grid */}
+            <div className="mt-6 grid grid-cols-3 gap-3 sm:gap-4 md:grid-cols-5 lg:mt-0 lg:grid-cols-3">
+              {menus.map((m) => (
+                <button
+                  key={m.label}
+                  className="relative flex aspect-square flex-col items-center justify-center gap-2 rounded-2xl bg-white p-2 text-center shadow-[0_2px_10px_rgba(0,0,0,0.08)] transition hover:shadow-[0_4px_16px_rgba(0,0,0,0.12)] active:scale-95 sm:gap-3 [&_svg]:h-10 [&_svg]:w-10 sm:[&_svg]:h-12 sm:[&_svg]:w-12"
+                >
+                  {m.badge && (
+                    <span className="absolute right-3 top-3 h-3 w-3 rounded-full bg-accent sm:h-3.5 sm:w-3.5" />
+                  )}
+                  <span className="text-accent">{m.icon}</span>
+                  <span className="text-sm leading-tight text-gray-800 sm:text-[15px]">{m.label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
 
-        {/* Menu grid */}
-        <div className="mt-6 grid grid-cols-3 gap-4">
-          {menus.map((m) => (
-            <button
-              key={m.label}
-              className="relative flex aspect-square flex-col items-center justify-center gap-3 rounded-2xl bg-white p-2 text-center shadow-[0_2px_10px_rgba(0,0,0,0.08)] transition active:scale-95"
-            >
-              {m.badge && (
-                <span className="absolute right-3 top-3 h-3.5 w-3.5 rounded-full bg-accent" />
-              )}
-              <span className="text-accent">{m.icon}</span>
-              <span className="text-[15px] leading-tight text-gray-800">{m.label}</span>
-            </button>
-          ))}
-        </div>
+          {/* Announcements */}
+          <section className="mt-8 md:mt-12">
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl font-medium text-gray-900 md:text-2xl">ประกาศจากนิติ</h2>
+              <a href="#" className="text-lg text-brand-dark underline underline-offset-4">
+                ดูเพิ่มเติม
+              </a>
+            </div>
+            <ul className="mt-5 grid grid-cols-1 gap-6 md:grid-cols-2 md:gap-x-8">
+              {announcements.map((a) => (
+                <li key={a.id} className="min-w-0">
+                  <a href="#" className="flex gap-4">
+                    <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-lg bg-linear-to-br from-slate-200 to-slate-400 sm:h-28 sm:w-28">
+                      {a.image && (
+                        <Image src={a.image} alt={a.title} fill sizes="112px" className="object-cover" />
+                      )}
+                    </div>
+                    <div className="flex min-w-0 flex-1 flex-col justify-between py-1">
+                      <p className="truncate text-lg font-medium text-gray-800 sm:text-xl">{a.title}</p>
+                      <p className="text-base text-brand-dark sm:text-lg">{a.date}</p>
+                    </div>
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </section>
 
-        <div className="mt-8 h-0.5 bg-brand" />
+          <div className="mt-6 h-0.5 bg-brand md:mt-10" />
+
+          {/* Highlights */}
+          <section className="mt-6">
+            <h2 className="text-xl font-medium text-gray-900 md:text-2xl">ไฮไลท์</h2>
+          </section>
+        </div>
       </main>
 
-      {/* Bottom navigation */}
-      <nav className="fixed bottom-0 z-20 grid w-full max-w-[480px] grid-cols-5 border-t-4 border-brand bg-white pb-4 pt-2">
+      {/* Bottom navigation (mobile) */}
+      <nav className="fixed inset-x-0 bottom-0 z-20 grid grid-cols-5 border-t-4 border-brand bg-white pb-[max(1rem,env(safe-area-inset-bottom))] pt-2 md:hidden">
         {tabs.map((t, i) => (
           <button
             key={t.label}
             onClick={() => setActiveTab(i)}
-            className={`flex flex-col items-center gap-0.5 text-sm ${
+            className={`flex flex-col items-center gap-0.5 text-xs min-[380px]:text-sm ${
               i === activeTab ? "font-medium text-brand-dark" : "text-gray-500"
             }`}
           >
